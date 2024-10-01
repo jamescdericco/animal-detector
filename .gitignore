@@ -1,0 +1,14 @@
+__pycache__/
+backup/
+dataset/
+frames_total*/
+model/
+server/
+ssl/
+videos*/
+
+twilio.env
+project.env
+*.jpg
+*.log*
+*.tar*
