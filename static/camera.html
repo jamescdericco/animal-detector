@@ -37,9 +37,18 @@
 
     errorLog.textContent += 'Error Log:\n'
 
+    function appendLog(message) {
+      errorLog.textContent += (new Date()).toISOString() + ": " + message + '\n';
+    }
+
     function logError(message) {
       console.error(message);
-      errorLog.textContent += (new Date()).toISOString() + ": " + message + '\n';
+      appendLog(message);
+    }
+
+    function logInfo(message) {
+      console.log(message);
+      appendLog(message);
     }
 
     function currentTimestampSeconds() {
@@ -56,14 +65,38 @@
       }
     }
     
-    // Capture a frame from the video and send it to the server
+    // Capture a frame from the video (cropped to 1:1 aspect ratio, with centered width and bottom height)
+    // and send it to the server
     function captureFrameAndSend() {
       // model dimensions 224x224 px
       canvas.width = 224;
       canvas.height = 224;
 
-      // Draw the current frame from the video onto the canvas
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // Get the width and height of the video feed
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+
+      // Set the target aspect ratio (1:1)
+      const targetAspectRatio = 1;
+
+      // Calculate the size of the crop
+      let cropWidth, cropHeight;
+      if (videoWidth / videoHeight > targetAspectRatio) {
+          // Video is wider than the target aspect ratio, so crop width
+          cropHeight = videoHeight;
+          cropWidth = cropHeight * targetAspectRatio;
+      } else {
+          // Video is taller than the target aspect ratio, so crop height
+          cropWidth = videoWidth;
+          cropHeight = cropWidth / targetAspectRatio;
+      }
+
+      // Calculate the position to start the crop (center width, bottom height)
+      const cropX = (videoWidth - cropWidth) / 2;
+      const cropY = videoHeight - cropHeight;
+
+      // Draw the cropped image to the canvas
+      context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
       
       // Convert the canvas image to a Blob (binary data)
       canvas.toBlob(function(blob) {
@@ -79,7 +112,7 @@
         })
         .then(response => response.json())
         .then(data => {
-          logError('Frame sent');
+          logInfo('Frame sent');
         })
         .catch(error => {
           logError('Error sending frame:' + error);
