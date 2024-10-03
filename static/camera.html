@@ -76,27 +76,15 @@
       const videoWidth = video.videoWidth;
       const videoHeight = video.videoHeight;
 
-      // Set the target aspect ratio (1:1)
-      const targetAspectRatio = 1;
-
-      // Calculate the size of the crop
-      let cropWidth, cropHeight;
-      if (videoWidth / videoHeight > targetAspectRatio) {
-          // Video is wider than the target aspect ratio, so crop width
-          cropHeight = videoHeight;
-          cropWidth = cropHeight * targetAspectRatio;
-      } else {
-          // Video is taller than the target aspect ratio, so crop height
-          cropWidth = videoWidth;
-          cropHeight = cropWidth / targetAspectRatio;
-      }
+      // Calculate the size of the crop to be scaled down
+      cropSize = Math.min(videoWidth, videoHeight);
 
       // Calculate the position to start the crop (center width, bottom height)
-      const cropX = (videoWidth - cropWidth) / 2;
-      const cropY = videoHeight - cropHeight;
+      const cropX = (videoWidth - cropSize) / 2;
+      const cropY = videoHeight - cropSize;
 
       // Draw the cropped image to the canvas
-      context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+      context.drawImage(video, cropX, cropY, cropSize, cropSize, 0, 0, canvas.width, canvas.height);
       
       // Convert the canvas image to a Blob (binary data)
       canvas.toBlob(function(blob) {
