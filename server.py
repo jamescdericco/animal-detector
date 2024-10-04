@@ -13,7 +13,7 @@ from animal_detector import load_animal_detector_learner
 app = Flask(__name__)
 
 # Set up logging to a file
-file_handler = RotatingFileHandler('server.log', maxBytes=100000, backupCount=100)
+file_handler = RotatingFileHandler('server.log', maxBytes=1000000, backupCount=100)
 file_handler.setLevel(logging.INFO)
 formatter = logging.Formatter(
     '%(asctime)s %(levelname)s: %(message)s'
