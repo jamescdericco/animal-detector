@@ -106,11 +106,11 @@ def update_frame_cat_food_cam():
     app.logger.info(f'Performance Timing Seconds: Request ({end_time_request - start_time_request:.3f}), Predict ({end_time_predict - start_time_predict:.3f})')
     return jsonify({"message": "Frame uploaded successfully"}), 200
 
-@app.get('/cat-food-cam/frame')
-def get_frame():
-    return jsonify({'Date': str(current_frame_datetime) if current_frame_datetime is not None else 'NA'})
+@app.get('/cat-food-cam/frame/time')
+def get_frame_time():
+    return jsonify({'Time': str(current_frame_datetime) if current_frame_datetime is not None else 'NA'})
 
-@app.get('/cat-food-cam/img')
+@app.get('/cat-food-cam/frame')
 def get_frame_img():
     # Convert the PIL image to a byte stream
     img_io = BytesIO()
