@@ -21,6 +21,7 @@ def extract_frames(video_path, frame_filename_ffmpeg_format_string: str):
         ffmpeg_command = [
             'ffmpeg',
             '-i', video_path,                # Input video
+            '-vf', 'fps=3,scale=-1:224,crop=224:224', # Decrease FPS, scale down widescreen video, then evenly crop the left and right sides
             os.path.join(output_folder, frame_filename_ffmpeg_format_string)  # Output frames as PNG
         ]
         
