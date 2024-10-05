@@ -2,7 +2,7 @@
 # Written by ChatGPT and James De Ricco
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import subprocess
 import re
@@ -42,18 +42,17 @@ def recursive_search_and_extract(root_dir):
                 label = os.path.basename(os.path.normpath(dirpath))
                 
                 # parse video filename for videodate, videotime
-                d = video_start_datetime_from_video_filename(filename)
+                d = video_datetime_utc_from_video_filename(filename)
                 
-                frame_filename_format = f'frame_label-{label}_videodate-{d.year:04d}{d.month:02d}{d.day:02d}_videotime-{d.hour:02d}{d.minute:02d}{d.second:02d}_framenumber-%04d.png'
+                frame_filename_format = f'frame_label-{label}_time-utc-{d.strftime('%Y-%m-%dT%H-%M-%S')}_number-%04d.png'
                 print(frame_filename_format)
 
                 extract_frames(video_path, frame_filename_format)
 
-def video_start_datetime_from_video_filename(filename):
+def video_datetime_utc_from_video_filename(filename):
     # jamescdericco_ivuu11AC2018002F4E192D9_2024-09-24_motion-01e02307-1727201642435_1727201642435.mp4
     start_timestamp = int(re.findall(r'\d+', filename)[-2]) / 1e3
-    start_datetime = datetime.fromtimestamp(start_timestamp)
-    return start_datetime
+    return datetime.fromtimestamp(start_timestamp).astimezone(timezone.utc)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extract frames from MP4 videos in a given directory.')

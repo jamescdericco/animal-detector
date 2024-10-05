@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 import os
 from flask import Flask, Response, jsonify, request
@@ -39,7 +39,7 @@ client = Client(account_sid, auth_token)
 
 # Key: Label, Value: Timestamp (seconds)
 detection_times = dict()
-current_frame_datetime = None
+current_frame_datetime_utc = None
 current_frame_img = None
 
 ignore_prediction_set = {'empty', 'squirrel', 'jacky'}
@@ -72,7 +72,7 @@ def home():
 
 @app.post('/cat-food-cam/frame')
 def update_frame_cat_food_cam():
-    global current_frame_datetime
+    global current_frame_datetime_utc
     global current_frame_img
 
     start_time_request = time.time()
@@ -82,8 +82,8 @@ def update_frame_cat_food_cam():
     # Get the image file and timestamp
     image = request.files['image']
     timestamp = request.form['timestamp']
-    frame_datetime = datetime.fromtimestamp(int(timestamp))
-    current_frame_datetime = frame_datetime
+    frame_datetime_utc = datetime.fromtimestamp(int(timestamp)).astimezone(timezone.utc)
+    current_frame_datetime_utc = frame_datetime_utc
     
     # Ensure the image file is provided
     if image.filename == '':
@@ -97,10 +97,10 @@ def update_frame_cat_food_cam():
     confidence = probabilities[prediction_index]
     end_time_predict = time.time()
 
-    img.save(f'server/frame_timestamp-{timestamp}_prediction-{prediction}_confidencepercent-{int(confidence*100):2d}.png')
+    img.save(f'server/frame_time-utc-{frame_datetime_utc.strftime('%Y-%m-%dT%H-%M-%S')}_prediction-{prediction}_confidence-percent-{int(confidence*100):2d}.png')
 
     if confidence > 0.9:
-        notify_animal_detected(prediction, confidence, frame_datetime)
+        notify_animal_detected(prediction, confidence, frame_datetime_utc)
 
     end_time_request = time.time()
     app.logger.info(f'Performance Timing Seconds: Request ({end_time_request - start_time_request:.3f}), Predict ({end_time_predict - start_time_predict:.3f})')
@@ -108,7 +108,7 @@ def update_frame_cat_food_cam():
 
 @app.get('/cat-food-cam/frame/time')
 def get_frame_time():
-    return jsonify({'Time': str(current_frame_datetime) if current_frame_datetime is not None else 'NA'})
+    return jsonify({'Time': str(current_frame_datetime_utc) if current_frame_datetime_utc is not None else 'NA'})
 
 @app.get('/cat-food-cam/frame')
 def get_frame_img():
