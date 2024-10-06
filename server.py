@@ -20,6 +20,8 @@ file_handler.setFormatter(formatter)
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 
+app.logger.info('Initializing server...')
+
 # Initialize the image classification model
 learner = load_animal_detector_learner()
 
