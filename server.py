@@ -22,14 +22,21 @@ app.logger.setLevel(logging.INFO)
 
 app.logger.info("Initializing server...")
 
-# Initialize the image classification model
-learner = load_animal_detector_learner()
+
+def get_required_env(var: str) -> str:
+    value = os.getenv(var)
+    if value is None:
+        raise ValueError(f"Environment variable {var} is not defined.")
+
+    return value
+
 
 # Find your Account SID and Auth Token at twilio.com/console
 # and set the environment variables. See http://twil.io/secure
-account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
+account_sid = get_required_env("TWILIO_ACCOUNT_SID")
+auth_token = get_required_env("TWILIO_AUTH_TOKEN")
+twilio_phone_number = get_required_env("TWILIO_PHONE_NUMBER")
+
 
 # NOTIFY_TXT_PHONE_NUMBERS is a comma separated list of ten digit phone numbers in E.164 format like '+12345678901'
 notify_txt_phone_numbers = os.getenv("NOTIFY_TXT_PHONE_NUMBERS")
@@ -50,16 +57,20 @@ current_frame_img = None
 
 ignore_prediction_set = {"empty", "squirrel"}
 
-
-def send_txt(phone, message):
+def send_txt(phone: str, message: str):
     app.logger.info(f"sending txt to {phone} with message {message}")
-
     message = client.messages.create(body=message, from_=twilio_phone_number, to=phone)
-
     app.logger.info(message.body)
 
+for phone_number in notify_txt_phone_numbers_list:
+    send_txt(phone_number, "server is starting...")
 
-def notify_animal_detected(prediction, confidence, frame_datetime):
+# Initialize the image classification model
+learner = load_animal_detector_learner()
+
+def notify_animal_detected(
+    prediction: str, confidence: float, frame_datetime: datetime
+):
     confidence_percent = confidence * 100
 
     if prediction in ignore_prediction_set:
