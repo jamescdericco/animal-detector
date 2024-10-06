@@ -90,7 +90,7 @@
       canvas.toBlob(function(blob) {
         // Create a FormData object to send the frame and timestamp
         const formData = new FormData();
-        formData.append('image', blob, 'frame.jpg');
+        formData.append('image', blob, 'frame.png');
         formData.append('timestamp', currentTimestampSeconds());
         
         // Send the image to the server via POST request
@@ -105,7 +105,7 @@
         .catch(error => {
           logError('Error sending frame:' + error);
         });
-      }, 'image/jpeg');
+      }, 'image/png');
     }
     
     // Capture and send frames every 3 seconds
