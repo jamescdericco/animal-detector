@@ -42,7 +42,7 @@ detection_times = dict()
 current_frame_datetime_utc = None
 current_frame_img = None
 
-ignore_prediction_set = {"empty", "squirrel", "jacky"}
+ignore_prediction_set = {"empty", "squirrel"}
 
 
 def send_txt(phone, message):
@@ -134,11 +134,11 @@ def get_frame_time():
 def get_frame_img():
     # Convert the PIL image to a byte stream
     img_io = BytesIO()
-    current_frame_img.save(img_io, "JPEG")  # Or 'PNG' depending on the image format
+    current_frame_img.save(img_io, "PNG")  # Or 'PNG' depending on the image format
     img_io.seek(0)
 
     # Return the byte stream as a response with the correct MIME type
-    return Response(img_io, mimetype="image/jpeg")
+    return Response(img_io, mimetype="image/png")
 
 
 if __name__ == "__main__":
