@@ -20,7 +20,7 @@ file_handler.setFormatter(formatter)
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 
-app.logger.info('Initializing server...')
+app.logger.info("Initializing server...")
 
 # Initialize the image classification model
 learner = load_animal_detector_learner()
@@ -35,6 +35,10 @@ twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
 notify_txt_phone_numbers = os.getenv("NOTIFY_TXT_PHONE_NUMBERS")
 notify_txt_phone_numbers_list = (
     notify_txt_phone_numbers.split(",") if notify_txt_phone_numbers is not None else []
+)
+
+print(
+    f"NOTIFY_TXT_PHONE_NUMBERS has {len(notify_txt_phone_numbers_list)} phone numbers"
 )
 
 client = Client(account_sid, auth_token)
