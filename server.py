@@ -55,22 +55,38 @@ detection_times = dict()
 current_frame_datetime_utc = None
 current_frame_img = None
 
+animal_log_csv_filename = "animal_log.csv"
+
 ignore_prediction_set = {"empty", "squirrel"}
+
 
 def send_txt(phone: str, message: str):
     app.logger.info(f"sending txt to {phone} with message {message}")
     message = client.messages.create(body=message, from_=twilio_phone_number, to=phone)
     app.logger.info(message.body)
 
+
 for phone_number in notify_txt_phone_numbers_list:
     send_txt(phone_number, "server is starting...")
+
+
+def log_detection(animal: str, time: datetime):
+    """Record the detection of animals to a CSV spreadsheet."""
+    with open(animal_log_csv_filename, mode="a", newline="") as file:
+        writer = csv.writer(file)
+
+        # Write the animal and time as a new row
+        writer.writerow([animal, time.strftime("%Y-%m-%dT%H:%M:%S")])
+
 
 # Initialize the image classification model
 learner = load_animal_detector_learner()
 
-def notify_animal_detected(
-    prediction: str, confidence: float, frame_datetime: datetime
-):
+
+def on_animal_detected(prediction: str, confidence: float, frame_datetime: datetime):
+    """Called when animal detected with high confidence.
+
+    Notifies contacts and logs the detection to a CSV file."""
     confidence_percent = confidence * 100
 
     if prediction in ignore_prediction_set:
@@ -81,6 +97,9 @@ def notify_animal_detected(
         or (frame_datetime - detection_times[prediction]).seconds > 30 * 60
     ):
         detection_times[prediction] = frame_datetime
+
+        log_detection(prediction, frame_datetime)
+
         for phone_number in notify_txt_phone_numbers_list:
             send_txt(
                 phone_number,
@@ -125,7 +144,7 @@ def update_frame_cat_food_cam():
     )
 
     if confidence > 0.9:
-        notify_animal_detected(prediction, confidence, frame_datetime_utc)
+        on_animal_detected(prediction, confidence, frame_datetime_utc)
 
     end_time_request = time.time()
     app.logger.info(
