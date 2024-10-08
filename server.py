@@ -50,14 +50,25 @@ print(
 
 client = Client(account_sid, auth_token)
 
-# Key: Label, Value: Timestamp (seconds)
+# Tracks the time of the most recent high confidence detection for an animal
+# to support detection cooldown
+# Key: Prediction, Value: Timestamp (seconds)
 detection_times = dict()
+
+# Seconds until a new detection triggers a new notification
+# following a previous notification for the same animal
+detection_cooldown_seconds = 30 * 60
+
 current_frame_datetime_utc = None
 current_frame_img = None
 
 animal_log_csv_filename = "animal_log.csv"
 
-ignore_prediction_set = {"empty", "squirrel"}
+# Name of a model prediction where no animals are detected
+empty_label = "empty"
+
+# Do not notify contacts when the model predicts any of these
+ignore_prediction_set = {empty_label, "squirrel"}
 
 
 def send_txt(phone: str, message: str):
@@ -83,18 +94,24 @@ def log_detection(animal: str, time: datetime):
 learner = load_animal_detector_learner()
 
 
-def on_animal_detected(prediction: str, confidence: float, frame_datetime: datetime):
-    """Called when animal detected with high confidence.
-
-    Notifies contacts and logs the detection to a CSV file."""
-    confidence_percent = confidence * 100
-
+def handle_detection(
+    prediction: str,
+    confidence: float,
+    frame_datetime: datetime,
+    previous_prediction: str,
+):
+    """Notifies contacts about detection and add an entry to the `animal_log` CSV file."""
     if prediction in ignore_prediction_set:
         return
 
     if (
-        prediction not in detection_times
-        or (frame_datetime - detection_times[prediction]).seconds > 30 * 60
+        confidence > 0.9
+        and (previous_prediction == prediction or previous_prediction == empty_label)
+        and (
+            prediction not in detection_times
+            or (frame_datetime - detection_times[prediction]).seconds
+            > detection_cooldown_seconds
+        )
     ):
         detection_times[prediction] = frame_datetime
 
@@ -103,7 +120,7 @@ def on_animal_detected(prediction: str, confidence: float, frame_datetime: datet
         for phone_number in notify_txt_phone_numbers_list:
             send_txt(
                 phone_number,
-                f"At {frame_datetime} detected {prediction} {confidence_percent:.2f}%",
+                f"At {frame_datetime} detected {prediction} {(confidence * 100):.0f}%",
             )
 
 
@@ -112,10 +129,15 @@ def home():
     return jsonify({"Title": "Animal Detection Server"})
 
 
+# Prediction for the frame before the current one
+previous_prediction = None
+
+
 @app.post("/cat-food-cam/frame")
 def update_frame_cat_food_cam():
     global current_frame_datetime_utc
     global current_frame_img
+    global previous_prediction
 
     start_time_request = time.time()
     if "image" not in request.files or "timestamp" not in request.form:
@@ -143,8 +165,9 @@ def update_frame_cat_food_cam():
         f"server/frame_time-utc-{frame_datetime_utc.strftime('%Y-%m-%dT%H-%M-%S')}_prediction-{prediction}_confidence-percent-{int(confidence*100):2d}.png"
     )
 
-    if confidence > 0.9:
-        on_animal_detected(prediction, confidence, frame_datetime_utc)
+    handle_detection(prediction, confidence, frame_datetime_utc, previous_prediction)
+
+    previous_prediction = prediction
 
     end_time_request = time.time()
     app.logger.info(
