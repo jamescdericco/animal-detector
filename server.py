@@ -68,7 +68,7 @@ animal_log_csv_filename = "animal_log.csv"
 empty_label = "empty"
 
 # Do not notify contacts when the model predicts any of these animals (non-empty, empty is already ignored)
-# these detections will still be logged into the `animal_log` CSV file
+# these detections will still be logged into the `animal_log_csv_filename` file
 do_not_notify_for_animals_set = {"squirrel", "jacky"}
 
 
@@ -101,7 +101,7 @@ def handle_detection(
     frame_datetime: datetime,
     previous_prediction: str,
 ):
-    """Notifies contacts about detection and add an entry to the `animal_log` CSV file."""
+    """Notifies contacts about detection (if not in `do_not_notify_for_animals_set`) and add an entry to the `animal_log_csv_filename` file."""
     if prediction == empty_label:
         return
 
