@@ -67,8 +67,9 @@ animal_log_csv_filename = "animal_log.csv"
 # Name of a model prediction where no animals are detected
 empty_label = "empty"
 
-# Do not notify contacts when the model predicts any of these
-ignore_prediction_set = {empty_label, "squirrel"}
+# Do not notify contacts when the model predicts any of these animals (non-empty, empty is already ignored)
+# these detections will still be logged into the `animal_log` CSV file
+do_not_notify_for_animals_set = {"squirrel", "jacky"}
 
 
 def send_txt(phone: str, message: str):
@@ -101,7 +102,7 @@ def handle_detection(
     previous_prediction: str,
 ):
     """Notifies contacts about detection and add an entry to the `animal_log` CSV file."""
-    if prediction in ignore_prediction_set:
+    if prediction == empty_label:
         return
 
     if (
@@ -117,11 +118,12 @@ def handle_detection(
 
         log_detection(prediction, frame_datetime)
 
-        for phone_number in notify_txt_phone_numbers_list:
-            send_txt(
-                phone_number,
-                f"At {frame_datetime} detected {prediction} {(confidence * 100):.0f}%",
-            )
+        if prediction not in do_not_notify_for_animals_set:
+            for phone_number in notify_txt_phone_numbers_list:
+                send_txt(
+                    phone_number,
+                    f"At {frame_datetime} detected {prediction} {(confidence * 100):.0f}%",
+                )
 
 
 @app.route("/")
