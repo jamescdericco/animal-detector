@@ -4,12 +4,13 @@ Animal Detector is a camera system designed to identify specific cats by name, a
 
 I trained an image classification deep learning model using camera images that this server collects, as well as images from a separate camera system. By default, the server saves all of the image frames it receives from the camera. I label these image frames by moving them into folders for each label, which are then used by my Kaggle notebook to train a new image classification model using fastai with PyTorch.
 
-## Setup Server
-The server requires a Linux operating system (this project was tested on Ubuntu 24.04 with the x86_64 architecture). Even though the server uses a deep neural network model to do image classification, it does not use the GPU, as PyTorch is configured to run CPU-only for inference in `environment.yml`.
+## Setup Server Conda Environment
+The server requires a Linux operating system (this project was tested on Ubuntu 24.04 with the x86_64 architecture). Although the server uses a deep neural network model to do image classification, it does not use the GPU, as PyTorch is configured to run CPU-only for inference in `environment.yml`.
 
 Install [miniconda](https://docs.anaconda.com/miniconda/)
 
-Create the `animal_detector` environment, including Python and this project's dependencies.
+Once you’ve copied this repository to your server, create the `animal_detector` conda environment, including Python and this project's dependencies.
+
 ```sh
 conda env create -f environment.yml
 ```
@@ -20,14 +21,22 @@ Download the PyTorch model from https://www.kaggle.com/models/jamesdericco/anima
 
 This model was generated in the Kaggle notebook https://www.kaggle.com/code/jamesdericco/animal-detector. The data used to train the model is available at https://www.kaggle.com/datasets/jamesdericco/cat-food-cam-20241006/.
 
-## Run Server
-First export all of the required environment variables for configuration.
+## Running the Server
+To run the server, ensure the following environment variables are configured. You can store these variables in a `project.env` file for easier management on Unix-like operating systems.
+
+- **NOTIFY_TXT_PHONE_NUMBERS**: A comma-separated list of phone numbers to receive notifications.
+- **TWILIO_ACCOUNT_SID**: Twilio API account SID, required to authenticate with Twilio.
+- **TWILIO_AUTH_TOKEN**: Twilio API authentication token.
+- **TWILIO_PHONE_NUMBER**: The Twilio phone number used as the sender for outgoing messages.
+
+Run the following command to load the environment variables from `project.env` into your shell session:
 
 ```sh
 source project.env
 ```
 
-Launch the server with the flask command (fill in SERVER_IP_ADDRESS):
+Once the environment variables are set, start the server with the `flask` command. Replace `SERVER_IP_ADDRESS` with your server's IP address.
+
 ```sh
 flask --app server run --no-debug -h SERVER_IP_ADDRESS -p 5000 --cert ssl/server.crt --key ssl/server.key
 ```
